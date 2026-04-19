@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Castle Infinity</title>
+<style>
+  :root{
+    --bg1:#000; --bg2:#1a0000; --red:#d00000; --red-dark:#8b0000; --panel:rgba(0,0,0,.85);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:Arial,Helvetica,sans-serif; color:#fff;
+    background:linear-gradient(135deg,var(--bg1),var(--bg2));
+    min-height:100vh; display:flex; align-items:center; justify-content:center; overflow:hidden;
+  }
+  .wrap{ width:100%; max-width:980px; padding:16px; }
+  .page{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    opacity:0; transform:scale(.98); transition:opacity .5s ease, transform .5s ease; pointer-events:none;
+  }
+  .page.active{ position:relative; opacity:1; transform:scale(1); pointer-events:auto; }
+  .card{
+    background:var(--panel); border-radius:16px; padding:22px;
+    width:min(92vw,380px); box-shadow:0 0 16px rgba(208,0,0,.6);
+    text-align:center;
+  }
+  .brand-img{
+    width:260px; max-width:80%; border-radius:10px; border:3px solid #fff; box-shadow:0 0 18px #fff; display:block; margin:0 auto 12px;
+  }
+  .subtitle{
+    font-weight:800; color:var(--red-dark); text-shadow:2px 2px 4px #000; letter-spacing:1px; margin:6px 0 12px;
+  }
+  h2{ margin:8px 0 10px; }
+  input, select, button{
+    width:100%; padding:11px; border:none; border-radius:10px; font-size:16px; margin:8px 0;
+  }
+  input, select{ background:#141414; color:#fff; outline:none; box-shadow:inset 0 0 6px rgba(208,0,0,.7); }
+  button{ background:var(--red); color:#fff; font-weight:700; cursor:pointer; box-shadow:0 0 12px rgba(208,0,0,.6); transition:.25s; }
+  button:hover{ background:#b00000 }
+  .note{ font-size:12px; opacity:.9 }
+  .note a{ color:var(--red); text-decoration:none }
+  /* MENU */
+  .menu .menu-btn{
+    width:100%; padding:10px; margin:6px 0; border:none; border-radius:10px; background:#101010; color:#fff; cursor:pointer;
+    box-shadow:0 0 8px rgba(208,0,0,.5);
+  }
+  .menu .menu-btn.selected{ background:var(--red); }
+  /* ADMIN TABLE */
+  .admin-grid{ width:min(94vw,900px); }
+  .admin-row{ display:grid; gap:12px; grid-template-columns:1fr 1fr 1fr 1fr auto; }
+  .admin-card{ background:var(--panel); border-radius:16px; padding:18px; box-shadow:0 0 16px rgba(208,0,0,.6); }
+  .admin-list{ margin-top:14px; max-height:50vh; overflow:auto; }
+  .badge{ padding:4px 8px; border-radius:999px; font-size:12px; background:#222; display:inline-block }
+  .badge.ok{ background:#153; }
+  .badge.exp{ background:#531; }
+  .actions button{ padding:6px 10px; margin-left:6px; border-radius:8px; }
+  /* RESPONSIVE */
+  @media (max-width:720px){
+    .admin-row{ grid-template-columns:1fr 1fr; }
+    .admin-row .wide{ grid-column:1 / -1; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- PAGE LOGIN -->
+  <section id="page-login" class="page active">
+    <div class="card">
+      <img src="https://files.catbox.moe/nv8rrj.jpg" alt="Castle Infinity" class="brand-img" />
+      <div class="subtitle">Limit Extremely</div>
+      <h2>Login</h2>
+      <input id="loginUser" placeholder="Username" autocomplete="username"/>
+      <input id="loginPass" type="password" placeholder="Password" autocomplete="current-password"/>
+      <button id="btnLogin">Login</button>
+      <div id="loginMsg" class="note"></div>
+      <div class="note" style="margin-top:8px;">Jika tidak punya akun beli di <a target="_blank" href="https://t.me/ceosung">@ceosung</a></div>
+    </div>
+  </section>
+
+  <!-- PAGE ADMIN -->
+  <section id="page-admin" class="page">
+    <div class="admin-card admin-grid">
+      <h2>Admin Panel</h2>
+      <div class="note">Login sebagai <b>admin</b>. Kelola user & masa berlaku akun.</div>
+
+      <div class="admin-card" style="margin-top:14px;">
+        <h3>Buat User Baru</h3>
+        <div class="admin-row">
+          <input id="newUsername" placeholder="Username baru"/>
+          <input id="newPassword" placeholder="Password" type="password"/>
+          <select id="newDuration" title="Masa berlaku">
+            <option value="permanent">Permanent</option>
+            <option value="1">1 bulan</option><option value="2">2 bulan</option>
+            <option value="3">3 bulan</option><option value="4">4 bulan</option>
+            <option value="5">5 bulan</option><option value="6">6 bulan</option>
+            <option value="7">7 bulan</option><option value="8">8 bulan</option>
+            <option value="9">9 bulan</option><option value="10">10 bulan</option>
+            <option value="11">11 bulan</option><option value="12">12 bulan</option>
+          </select>
+          <button id="btnCreate">Buat</button>
+          <div id="createMsg" class="note wide"></div>
+        </div>
+      </div>
+
+      <div class="admin-card" style="margin-top:14px;">
+        <h3>Daftar User</h3>
+        <div id="usersList" class="admin-list"></div>
+      </div>
+
+      <div style="margin-top:10px; display:flex; gap:10px;">
+        <button id="btnAdminLogout">Logout</button>
+        <button id="btnToApp">Masuk ke Aplikasi (uji sebagai user)</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE TARGET -->
+  <section id="page-target" class="page">
+    <div class="card" style="width:min(92vw,420px);">
+      <h2>Masukkan Nomor Target</h2>
+      <input id="targetNumber" placeholder="Contoh: 628123456789"/>
+      <button id="btnToMenu">Teruskan Menu</button>
+    </div>
+  </section>
+
+  <!-- PAGE MENU -->
+  <section id="page-menu" class="page">
+    <div class="card" style="width:min(92vw,420px);">
+      <h2>Choose Menu</h2>
+      <div class="menu">
+        <button class="menu-btn">Fc Invis</button>
+        <button class="menu-btn">Delay Normal</button>
+        <button class="menu-btn">Delay Hard</button>
+        <button class="menu-btn">Crash Andro</button>
+        <button class="menu-btn">Crash iPhone</button>
+        <button class="menu-btn">Demonic Hard</button>
+      </div>
+      <button id="btnSend">Send 👹</button>
+    </div>
+  </section>
+
+  <!-- PAGE RESULT -->
+  <section id="page-result" class="page">
+    <div class="card" style="width:min(92vw,420px);">
+      <h2>Nomor target berjaya di bantai</h2>
+      <p><a id="targetLink" href="#" target="_blank">Target</a></p>
+      <button id="btnBackToFirst">Kembali</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ========= STORAGE LAYER (localStorage) ========= */
+const LS_KEY = 'ci_users';
+function getUsers(){
+  const raw = localStorage.getItem(LS_KEY);
+  try { return raw ? JSON.parse(raw) : []; } catch { return []; }
+}
+function saveUsers(arr){
+  localStorage.setItem(LS_KEY, JSON.stringify(arr));
+}
+function addMonths(date, months){
+  const d = new Date(date);
+  const day = d.getDate();
+  d.setMonth(d.getMonth() + months);
+  if (d.getDate() < day) d.setDate(0); // handle month overflow
+  return d;
+}
+function createUser(username, password, duration){ // duration: "permanent" or "1"-"12"
+  const users = getUsers();
+  if (username.toLowerCase() === 'admin') return { ok:false, msg:'Tidak boleh membuat username "admin".' };
+  if (users.some(u => u.username.toLowerCase() === username.toLowerCase()))
+    return { ok:false, msg:'Username sudah dipakai.' };
+
+  let expiresAt = null;
+  if (duration && duration !== 'permanent'){
+    const m = parseInt(duration,10);
+    if (!(m>=1 && m<=12)) return { ok:false, msg:'Durasi tidak valid.' };
+    expiresAt = addMonths(new Date(), m).getTime();
+  }
+  users.push({ username, password, expiresAt, createdAt: Date.now() });
+  saveUsers(users);
+  return { ok:true };
+}
+function findUser(username){
+  const users = getUsers();
+  return users.find(u => u.username.toLowerCase() === String(username).toLowerCase());
+}
+function deleteUser(username){
+  const users = getUsers().filter(u => u.username.toLowerCase() !== username.toLowerCase());
+  saveUsers(users);
+}
+function isExpired(expiresAt){
+  if (!expiresAt) return false; // permanent
+  return Date.now() > Number(expiresAt);
+}
+function fmtTime(ts){
+  if (!ts) return 'Permanent';
+  const d = new Date(Number(ts));
+  return d.toLocaleString();
+}
+
+/* ========= UI NAV ========= */
+const pages = {
+  login: document.getElementById('page-login'),
+  admin: document.getElementById('page-admin'),
+  target: document.getElementById('page-target'),
+  menu: document.getElementById('page-menu'),
+  result: document.getElementById('page-result')
+};
+function show(id){
+  Object.values(pages).forEach(p=>p.classList.remove('active'));
+  pages[id].classList.add('active');
+}
+
+/* ========= STATE ========= */
+let selectedMenu = null;
+let savedTarget = '';
+let currentUser = null; // string username
+
+/* ========= ELEMENTS ========= */
+// login
+const loginUser = document.getElementById('loginUser');
+const loginPass = document.getElementById('loginPass');
+const btnLogin = document.getElementById('btnLogin');
+const loginMsg = document.getElementById('loginMsg');
+
+// admin
+const newUsername = document.getElementById('newUsername');
+const newPassword = document.getElementById('newPassword');
+const newDuration = document.getElementById('newDuration');
+const btnCreate = document.getElementById('btnCreate');
+const createMsg = document.getElementById('createMsg');
+const usersList = document.getElementById('usersList');
+const btnAdminLogout = document.getElementById('btnAdminLogout');
+const btnToApp = document.getElementById('btnToApp');
+
+// app
+const btnToMenu = document.getElementById('btnToMenu');
+const targetNumber = document.getElementById('targetNumber');
+const btnSend = document.getElementById('btnSend');
+const targetLink = document.getElementById('targetLink');
+const btnBackToFirst = document.getElementById('btnBackToFirst');
+
+/* ========= LOGIN HANDLER ========= */
+btnLogin.addEventListener('click', ()=>{
+  loginMsg.textContent = '';
+  const u = loginUser.value.trim();
+  const p = loginPass.value.trim();
+  if (!u || !p){ loginMsg.textContent = 'Isi username & password.'; return; }
+
+  // admin credentials
+  if (u === 'admin' && p === 'ceosung'){
+    currentUser = 'admin';
+    renderUsers();
+    show('admin');
+    return;
+  }
+
+  // normal user
+  const user = findUser(u);
+  if (!user || user.password !== p){
+    loginMsg.textContent = 'Username atau password salah.';
+    return;
+  }
+  if (isExpired(user.expiresAt)){
+    loginMsg.textContent = 'Akun sudah tamat tempoh.';
+    return;
+  }
+  currentUser = user.username;
+  show('target');
+});
+
+/* ========= ADMIN PANEL ========= */
+function renderUsers(){
+  const arr = getUsers().sort((a,b)=> (a.createdAt||0) < (b.createdAt||0) ? 1 : -1);
+  if (arr.length === 0){
+    usersList.innerHTML = '<div class="note">Belum ada user. Tambahkan di atas.</div>';
+    return;
+  }
+  usersList.innerHTML = '';
+  arr.forEach(u=>{
+    const row = document.createElement('div');
+    row.className = 'admin-row';
+    const expired = isExpired(u.expiresAt);
+    row.innerHTML = `
+      <div><b>${u.username}</b></div>
+      <div>Expires: ${fmtTime(u.expiresAt)}</div>
+      <div>Created: ${fmtTime(u.createdAt)}</div>
+      <div>${expired ? '<span class="badge exp">Expired</span>' : '<span class="badge ok">Active</span>'}</div>
+      <div class="actions" style="text-align:right;">
+        <button data-u="${u.username}" class="btnDel">Hapus</button>
+      </div>
+    `;
+    usersList.appendChild(row);
+  });
+  usersList.querySelectorAll('.btnDel').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const uname = btn.getAttribute('data-u');
+      if (!confirm(`Hapus user "${uname}"?`)) return;
+      deleteUser(uname);
+      renderUsers();
+    });
+  });
+}
+
+btnCreate.addEventListener('click', ()=>{
+  createMsg.textContent = '';
+  const u = newUsername.value.trim();
+  const p = newPassword.value.trim();
+  const d = newDuration.value;
+  if (!u || !p){ createMsg.textContent = 'Isi username & password.'; return; }
+  const res = createUser(u,p,d);
+  if (!res.ok){ createMsg.textContent = res.msg || 'Gagal membuat user.'; return; }
+  createMsg.textContent = 'User berhasil dibuat.';
+  newUsername.value=''; newPassword.value=''; newDuration.value='permanent';
+  renderUsers();
+});
+
+btnAdminLogout.addEventListener('click', ()=>{
+  currentUser = null; loginUser.value=''; loginPass.value='';
+  show('login');
+});
+btnToApp.addEventListener('click', ()=>{
+  // untuk uji alur aplikasi
+  show('target');
+});
+
+/* ========= APP FLOW ========= */
+// pilih menu (single select)
+document.querySelectorAll('.menu-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.menu-btn').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedMenu = btn.textContent;
+  });
+});
+
+btnToMenu.addEventListener('click', ()=>{
+  const num = targetNumber.value.trim();
+  if (!num){ alert('Masukkan nomor target!'); return; }
+  savedTarget = num;
+  show('menu');
+});
+
+btnSend.addEventListener('click', ()=>{
+  if (!selectedMenu){ alert('Pilih salah satu menu!'); return; }
+  targetLink.href = 'https://wa.me/' + encodeURIComponent(savedTarget);
+  show('result');
+});
+
+btnBackToFirst.addEventListener('click', ()=>{
+  // kembali ke halaman setelah login (input nomor)
+  show('target');
+});
+
+/* ========= QUALITY OF LIFE ========= */
+document.addEventListener('keydown', (e)=>{
+  if (e.key === 'Enter'){
+    if (pages.login.classList.contains('active')) btnLogin.click();
+    else if (pages.target.classList.contains('active')) btnToMenu.click();
+  }
+});
+</script>
+</body>
+  </html>
